@@ -526,3 +526,26 @@ from t1
 group by maker
 having max(mprice_l) is not null or max(mprice_pc) is not null or max(mprice_pr) is not null
 
+
+#76
+Определить время, проведенное в полетах, для пассажиров, летавших всегда на разных местах. Вывод: имя пассажира, время в минутах.
+Функция DATEDIFF http://www.sql-tutorial.ru/ru/book_datediff_function.html
+Функция DATEADD http://www.sql-tutorial.ru/ru/book_dateadd_function.html
+
+select name, dur from (
+  select 
+    pit.id_psg, 
+    sum(DATEDIFF(mi, time_out, case when time_in < time_out then DATEADD(day, 1, time_in ) else time_in end)) dur 
+  from trip t
+  join pass_in_trip pit on 
+    t.trip_no=pit.trip_no
+  WHERE pit.id_psg not IN 
+    (
+      SELECT coalesce(t.id_psg, 0) as id_psg
+      FROM Pass_in_trip t  
+      GROUP by t.id_psg, t.place
+      HAVING COUNT(*) > 1)
+  group by pit.id_psg
+) x
+join passenger ps on ps.id_psg = x.id_psg
+
